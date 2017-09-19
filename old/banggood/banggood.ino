@@ -1,0 +1,398 @@
+
+int dataIn = 8;
+int load = 9;
+int clock = 10;
+
+int maxInUse = 9;    //change this variable to set how many MAX7219's you'll use
+
+uint8_t bufor[8][9];
+
+int e = 0;           // just a varialble
+                     // define max7219 registers
+                     
+byte max7219_reg_noop        = 0x00;
+byte max7219_reg_digit0      = 0x01;
+byte max7219_reg_digit1      = 0x02;
+byte max7219_reg_digit2      = 0x03;
+byte max7219_reg_digit3      = 0x04;
+byte max7219_reg_digit4      = 0x05;
+byte max7219_reg_digit5      = 0x06;
+byte max7219_reg_digit6      = 0x07;
+byte max7219_reg_digit7      = 0x08;
+byte max7219_reg_decodeMode  = 0x09;
+byte max7219_reg_intensity   = 0x0a;
+byte max7219_reg_scanLimit   = 0x0b;
+byte max7219_reg_shutdown    = 0x0c;
+byte max7219_reg_displayTest = 0x0f;
+
+byte System5x7[] = {
+    0x0, 0x0, // size of zero indicates fixed width font, actual length is width * height
+    0x05, // width
+    0x07, // height
+    0x20, // first char
+    0x60, // char count
+    
+    // Fixed width; char width table not used !!!!
+    
+    // font data
+    0x00, 0x00, 0x00, 0x00, 0x00,// (space)
+	0x00, 0x00, 0x5F, 0x00, 0x00,// !
+	0x00, 0x07, 0x00, 0x07, 0x00,// "
+	0x14, 0x7F, 0x14, 0x7F, 0x14,// #
+	0x24, 0x2A, 0x7F, 0x2A, 0x12,// $
+	0x23, 0x13, 0x08, 0x64, 0x62,// %
+	0x36, 0x49, 0x55, 0x22, 0x50,// &
+	0x00, 0x05, 0x03, 0x00, 0x00,// '
+	0x00, 0x1C, 0x22, 0x41, 0x00,// (
+	0x00, 0x41, 0x22, 0x1C, 0x00,// )
+	0x08, 0x2A, 0x1C, 0x2A, 0x08,// *
+	0x08, 0x08, 0x3E, 0x08, 0x08,// +
+	0x00, 0x50, 0x30, 0x00, 0x00,// ,
+	0x08, 0x08, 0x08, 0x08, 0x08,// -
+	0x00, 0x60, 0x60, 0x00, 0x00,// .
+	0x20, 0x10, 0x08, 0x04, 0x02,// /
+	0x3E, 0x51, 0x49, 0x45, 0x3E,// 0
+	0x00, 0x42, 0x7F, 0x40, 0x00,// 1
+	0x42, 0x61, 0x51, 0x49, 0x46,// 2
+	0x21, 0x41, 0x45, 0x4B, 0x31,// 3
+	0x18, 0x14, 0x12, 0x7F, 0x10,// 4
+	0x27, 0x45, 0x45, 0x45, 0x39,// 5
+	0x3C, 0x4A, 0x49, 0x49, 0x30,// 6
+	0x01, 0x71, 0x09, 0x05, 0x03,// 7
+	0x36, 0x49, 0x49, 0x49, 0x36,// 8
+	0x06, 0x49, 0x49, 0x29, 0x1E,// 9
+	0x00, 0x36, 0x36, 0x00, 0x00,// :
+	0x00, 0x56, 0x36, 0x00, 0x00,// ;
+	0x00, 0x08, 0x14, 0x22, 0x41,// <
+	0x14, 0x14, 0x14, 0x14, 0x14,// =
+	0x41, 0x22, 0x14, 0x08, 0x00,// >
+	0x02, 0x01, 0x51, 0x09, 0x06,// ?
+	0x32, 0x49, 0x79, 0x41, 0x3E,// @
+	0x7E, 0x11, 0x11, 0x11, 0x7E,// A
+	0x7F, 0x49, 0x49, 0x49, 0x36,// B
+	0x3E, 0x41, 0x41, 0x41, 0x22,// C
+	0x7F, 0x41, 0x41, 0x22, 0x1C,// D
+	0x7F, 0x49, 0x49, 0x49, 0x41,// E
+	0x7F, 0x09, 0x09, 0x01, 0x01,// F
+	0x3E, 0x41, 0x41, 0x51, 0x32,// G
+	0x7F, 0x08, 0x08, 0x08, 0x7F,// H
+	0x00, 0x41, 0x7F, 0x41, 0x00,// I
+	0x20, 0x40, 0x41, 0x3F, 0x01,// J
+	0x7F, 0x08, 0x14, 0x22, 0x41,// K
+	0x7F, 0x40, 0x40, 0x40, 0x40,// L
+	0x7F, 0x02, 0x04, 0x02, 0x7F,// M
+	0x7F, 0x04, 0x08, 0x10, 0x7F,// N
+	0x3E, 0x41, 0x41, 0x41, 0x3E,// O
+	0x7F, 0x09, 0x09, 0x09, 0x06,// P
+	0x3E, 0x41, 0x51, 0x21, 0x5E,// Q
+	0x7F, 0x09, 0x19, 0x29, 0x46,// R
+	0x46, 0x49, 0x49, 0x49, 0x31,// S
+	0x01, 0x01, 0x7F, 0x01, 0x01,// T
+	0x3F, 0x40, 0x40, 0x40, 0x3F,// U
+	0x1F, 0x20, 0x40, 0x20, 0x1F,// V
+	0x7F, 0x20, 0x18, 0x20, 0x7F,// W
+	0x63, 0x14, 0x08, 0x14, 0x63,// X
+	0x03, 0x04, 0x78, 0x04, 0x03,// Y
+	0x61, 0x51, 0x49, 0x45, 0x43,// Z
+	0x00, 0x00, 0x7F, 0x41, 0x41,// [
+	0x02, 0x04, 0x08, 0x10, 0x20,// "\"
+	0x41, 0x41, 0x7F, 0x00, 0x00,// ]
+	0x04, 0x02, 0x01, 0x02, 0x04,// ^
+	0x40, 0x40, 0x40, 0x40, 0x40,// _
+	0x00, 0x01, 0x02, 0x04, 0x00,// `
+	0x20, 0x54, 0x54, 0x54, 0x78,// a
+	0x7F, 0x48, 0x44, 0x44, 0x38,// b
+	0x38, 0x44, 0x44, 0x44, 0x20,// c
+	0x38, 0x44, 0x44, 0x48, 0x7F,// d
+	0x38, 0x54, 0x54, 0x54, 0x18,// e
+	0x08, 0x7E, 0x09, 0x01, 0x02,// f
+	0x08, 0x14, 0x54, 0x54, 0x3C,// g
+	0x7F, 0x08, 0x04, 0x04, 0x78,// h
+	0x00, 0x44, 0x7D, 0x40, 0x00,// i
+	0x20, 0x40, 0x44, 0x3D, 0x00,// j
+	0x00, 0x7F, 0x10, 0x28, 0x44,// k
+	0x00, 0x41, 0x7F, 0x40, 0x00,// l
+	0x7C, 0x04, 0x18, 0x04, 0x78,// m
+	0x7C, 0x08, 0x04, 0x04, 0x78,// n
+	0x38, 0x44, 0x44, 0x44, 0x38,// o
+	0x7C, 0x14, 0x14, 0x14, 0x08,// p
+	0x08, 0x14, 0x14, 0x18, 0x7C,// q
+	0x7C, 0x08, 0x04, 0x04, 0x08,// r
+	0x48, 0x54, 0x54, 0x54, 0x20,// s
+	0x04, 0x3F, 0x44, 0x40, 0x20,// t
+	0x3C, 0x40, 0x40, 0x20, 0x7C,// u
+	0x1C, 0x20, 0x40, 0x20, 0x1C,// v
+	0x3C, 0x40, 0x30, 0x40, 0x3C,// w
+	0x44, 0x28, 0x10, 0x28, 0x44,// x
+	0x0C, 0x50, 0x50, 0x50, 0x3C,// y
+	0x44, 0x64, 0x54, 0x4C, 0x44,// z
+	0x00, 0x08, 0x36, 0x41, 0x00,// {
+	0x00, 0x00, 0x7F, 0x00, 0x00,// |
+	0x00, 0x41, 0x36, 0x08, 0x00,// }
+	0x08, 0x08, 0x2A, 0x1C, 0x08,// ->
+	0x08, 0x1C, 0x2A, 0x08, 0x08 // <-
+    
+};
+
+
+void putByte(byte data) {
+  byte i = 8;
+  byte mask;
+  while(i > 0) {
+    mask = 0x01 << (i - 1);      // get bitmask
+    digitalWrite( clock, LOW);   // tick
+    if (data & mask){            // choose bit
+      digitalWrite(dataIn, HIGH);// send 1
+    }else{
+      digitalWrite(dataIn, LOW); // send 0
+    }
+    digitalWrite(clock, HIGH);   // tock
+    --i;                         // move to lesser bit
+  }
+}
+
+void putByte2(byte data) {
+  byte i = 1;
+  byte mask;
+  while(i < 9) {
+    mask = 0x01 << (i - 1);      // get bitmask
+    digitalWrite( clock, LOW);   // tick
+    if (data & mask){            // choose bit
+      digitalWrite(dataIn, HIGH);// send 1
+    }else{
+      digitalWrite(dataIn, LOW); // send 0
+    }
+    digitalWrite(clock, HIGH);   // tock
+    ++i;                         // move to lesser bit
+  }
+}
+
+void maxSingle( byte reg, byte col) {    
+//maxSingle is the "easy"  function to use for a     //single max7219
+
+  digitalWrite(load, LOW);       // begin     
+  putByte(reg);                  // specify register
+  putByte(col);//((data & 0x01) * 256) + data >> 1); // put data   
+  digitalWrite(load, LOW);       // and load da shit
+  digitalWrite(load,HIGH); 
+}
+
+void maxAll (byte reg, byte col) {    // initialize  all  MAX7219's in the system
+  int c = 0;
+  digitalWrite(load, LOW);  // begin     
+  for ( c =1; c<= maxInUse; c++) {
+  putByte(reg);  // specify register
+  putByte(col);//((data & 0x01) * 256) + data >> 1); // put data
+    }
+  digitalWrite(load, LOW);
+  digitalWrite(load,HIGH);
+}
+
+void maxOne(byte maxNr, byte reg, byte col) {    
+//maxOne is for adressing different MAX7219's, 
+//whilele having a couple of them cascaded
+
+  int c = 0;
+  digitalWrite(load, LOW);  // begin     
+
+  for ( c = maxInUse; c > maxNr; c--) {
+    putByte(0);    // means no operation
+    putByte(0);    // means no operation
+  }
+
+  putByte(reg);  // specify register
+  putByte(col);//((data & 0x01) * 256) + data >> 1); // put data 
+
+  for ( c =maxNr-1; c >= 1; c--) {
+    putByte(0);    // means no operation
+    putByte(0);    // means no operation
+  }
+
+  digitalWrite(load, LOW); // and load da shit
+  digitalWrite(load,HIGH); 
+}
+
+void maxBuf() {
+  int a = 0;
+  int c = 0;
+  for(a=1; a <=8; a++) {
+    digitalWrite(load, LOW);  // begin     
+    for ( c = maxInUse; c >=1; c--) {
+      putByte(a);    // means no operation
+      putByte2(bufor[a-1][c-1]);    // means no operation
+    }
+    digitalWrite(load, LOW); // and load da shit
+    digitalWrite(load,HIGH); 
+  }
+  
+}
+
+void clearBuf(){
+  int a=1;
+  int b=1;
+ 
+  for (a=0;a<=7;a++){
+    for(b=0;b<=maxInUse-1;b++){
+      bufor[a][b] = 0;
+    }
+  }    
+}
+
+byte litera(char lit,byte kol) {
+ 
+  return(System5x7[(lit-31)*5+kol]);
+}
+
+void znak(char lit,byte kol)
+{
+  int lit1 = (lit-31)*5;
+  
+  bufor[2][kol] = System5x7[lit1+1];
+  bufor[3][kol] = System5x7[lit1+2];
+  bufor[4][kol] = System5x7[lit1+3];
+  bufor[5][kol] = System5x7[lit1+4];
+  bufor[6][kol] = System5x7[lit1+5];
+}
+
+void znak1(char lit,int kol)
+{
+  int lit1 = (lit-31)*5+1;
+  byte a =0;
+  if (((kol-1)/8 < maxInUse) and ((kol-1)/8 >=0) )
+    { bufor[(kol-1)%8][(kol-1)/8] = 0;}
+    
+  for (a=0; a<5;a++) {
+    if (((kol+a)/8 < maxInUse) and ((kol+a)/8 >=0) )
+    {bufor[(kol+a)%8][(kol+a)/8] = System5x7[lit1+a];}
+  }
+  if (((kol+5)/8 < maxInUse) and ((kol+5)/8 >=0) )
+    { bufor[(kol+5)%8][(kol+5)/8] = 0;}
+}
+
+
+void setup () {
+
+  pinMode(dataIn, OUTPUT);
+  pinMode(clock,  OUTPUT);
+  pinMode(load,   OUTPUT);
+
+  Serial.begin(9600);
+//initiation of the max 7219
+  maxAll(max7219_reg_scanLimit, 0x07);      
+  maxAll(max7219_reg_decodeMode, 0x00);  // using an led matrix (not digits)
+  maxAll(max7219_reg_shutdown, 0x01);    // not in shutdown mode
+  maxAll(max7219_reg_displayTest, 0x00); // no display test
+  
+  for (e=1; e<=8; e++) {    // empty registers, turn all LEDs off 
+    maxAll(e,0);
+  }
+  maxAll(max7219_reg_intensity, 0x0f & 0x02);    // the first 0x0f is the value you can set  
+                                                  // range: 0x00 to 0x0f
+  clearBuf();
+} 
+
+void bg(int d){
+  clearBuf();  
+  znak1('>',0);  
+  znak1('>',6);  
+  znak1('I',12);  
+  znak1('n',18);  
+  znak1('f',24);  
+  znak1('i',30);
+  znak1('n',36);
+  znak1('i',42);
+  znak1('t',48);
+  znak1('e',54);
+  znak1('<',60);
+  znak1('<',66);
+  
+  
+  
+  maxBuf();
+  delay(d);
+  clearBuf();
+  maxBuf();  
+  delay(200);
+  
+}
+
+
+void loop () {
+  int a=0;
+  
+  delay(5000);
+  
+  
+  bg(2000);  
+  bg(1000);  
+  bg(700);  
+  bg(400);  
+  bg(300);  
+  bg(200);
+  bg(200);
+  bg(200);
+
+  clearBuf();  
+  znak1('>',0);  
+  znak1('>',6);  
+  znak1('I',12);  
+  znak1('n',18);  
+  znak1('f',24);  
+  znak1('i',30);
+  znak1('n',36);
+  znak1('i',42);
+  znak1('t',48);
+  znak1('e',54);
+  znak1('<',60);
+  znak1('<',66);
+  maxBuf();
+    
+  for (a=0;a<16;a++) {
+    maxAll(max7219_reg_intensity, 0x0f & a);
+    delay(500);
+  }
+  
+  for (a=0;a<16;a++) {
+    maxAll(max7219_reg_intensity, 0x0f & 15-a);
+    delay(500);
+  }
+
+  maxAll(max7219_reg_intensity, 0x0f & 7);
+  
+  clearBuf();
+  for(a=73;a>-72;a--) {
+    znak1('>',a+0);  
+    znak1('>',a+6);  
+    znak1('I',a+12);  
+    znak1('n',a+18);  
+    znak1('f',a+24);  
+    znak1('i',a+30);
+    znak1('n',a+36);
+    znak1('i',a+42);
+    znak1('t',a+48);
+    znak1('e',a+54);
+    znak1('<',a+60);
+    znak1('<',a+66);
+    maxBuf();
+    delay(200);
+  } 
+ 
+  clearBuf();
+  for(a=-72;a<73;a++) {
+    znak1('>',a+0);  
+    znak1('>',a+6);  
+    znak1('I',a+12);  
+    znak1('n',a+18);  
+    znak1('f',a+24);  
+    znak1('i',a+30);
+    znak1('n',a+36);
+    znak1('i',a+42);
+    znak1('t',a+48);
+    znak1('e',a+54);
+    znak1('<',a+60);
+    znak1('<',a+66);
+    maxBuf();
+   delay(200);
+  } 
+   
+}
