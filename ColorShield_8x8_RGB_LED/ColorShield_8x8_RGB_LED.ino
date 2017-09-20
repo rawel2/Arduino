@@ -19,11 +19,8 @@
 #include <Wire.h>
 #include <avr/pgmspace.h> 
 
-#if defined(ARDUINO) && ARDUINO >= 100
+
 #include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
 
 /*****************************
 define the operate commands
@@ -58,30 +55,19 @@ define the IO
 #define open_line7	{PORTD=0x10;}
 #define close_all_line	{PORTD=0x00;PORTB=0x00;}
 
-/*******************************************
-define the data zone
-*******************************************/
-/*
-//Test dots
-unsigned char Tdots[8][8][3]=     {{{0,0,255},     {0,0,255},      {0,0,255},     {0,0,255},    {0,0,255},      {0,0,255},       {0,0,255},        {0,0,255}},
-                                  {{0,165,255},   {0,165,255},    {0,165,255},   {0,165,255},  {0,165,255},    {0,165,255},     {0,165,255},      {0,165,255}},
-                                  {{0,255,255},   {0,255,255},    {0,255,255},   {0,255,255},  {0,255,255},    {0,255,255},     {0,255,255},      {0,255,255}},
-                                  {{0,255,0},     {0,255,0},      {0,255,0},     {0,255,0},    {0,255,0},      {0,255,0},       {0,255,0},        {0,255,0}},
-                                  {{255,127,0},   {255,127,0},    {255,127,0},   {255,127,0},  {255,127,0},    {255,127,0},     {255,127,0},      {255,127,0}},
-                                  {{255,0,0},     {255,0,0},      {255,0,0},     {255,0,0},    {255,0,0},      {255,0,0},       {255,0,0},        {255,0,0}},
-                                  {{255,0,139},   {255,0,139},    {255,0,139},   {255,0,139},  {255,0,139},    {255,0,139},     {255,0,139},      {255,0,139}},
-                                  {{255,255,255}, {255,255,255},  {255,255,255}, {255,255,255},{255,255,255},  {255,255,255},   {255,255,255},    {255,255,255}}
-                                 };
-*/
+
 unsigned char dots[2][8][8][3] = {0};
+
 //dots matrix
 //[2]:Page:one for display, one for receive data
 //[8]:Row:8 row in LED plane
 //[8]:Column:8 column in one row
 //[3]:Color:RGB data: 0 for Red; 1 for green, 2 for Blue
-unsigned char Gamma_Value[3] = {30,63,50};
+
+unsigned char Gamma_Value[3] = {20,63,50};
 //Gamma correctly value, every LED plane is different.value range is 0~63
 //[3]:RGB data, 0 for Red; 1 for green, 2 for Blue
+
 unsigned char Page_Index = 0; // the index of buffer
 unsigned char row = 0;//the value of row in LED plane, from 0~7
 unsigned char column = 0;//the value of every row, from 0~7
@@ -430,8 +416,11 @@ void setup()
 void loop()
 {
   unsigned int i = 100;
-  
-  PrzesunLitereBG('B',  5,  0,  5,  00,100,200);
+  uint8_t jj = 0;
+  while(1) {
+    DispShowColor(jj,jj,jj++);
+    delay(20);
+  }
   PrzesunLitereBG('e',  5,  0,  5,  20, 90,190);
   PrzesunLitereBG('a',  5,  0,  5,  40, 80,180);
   PrzesunLitereBG('t',  5,  0,  5,  60, 70,170);

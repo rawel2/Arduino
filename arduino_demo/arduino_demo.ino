@@ -22,6 +22,7 @@
 #define START_OF_DATA 0x10       //data markers
 #define END_OF_DATA 0x20         //data markers
 #define DEST_I2C_ADDR 5          //set destination I2C address (must match firmware in Colorduino module)
+#define DEST_I2C_COUNT 4          //set destination I2C address (must match firmware in Colorduino module)
 
 #define SCREENSIZEX 8            //num of LEDs accross
 #define SCREENSIZEY 8            //num of LEDs down
@@ -84,6 +85,7 @@ void setup()
   //DS3231_set_time(13,1,0);
   DS3231_get_datetime(&datetime );
   DS3231_get_temp(&temperature);
+  SendGammaAll(8,63,50);
 }
 
 void loop()
@@ -121,7 +123,7 @@ void plasma_morph()
 
   Serial.println(paletteShift);
   
-  x0 = 0;
+  x0 = 250;
 //  y0 = paletteShift%300 - 8;
 //  if (y0 > 0) {y0=0;}
   
@@ -175,6 +177,20 @@ void plasma_morph()
   update_display(DEST_I2C_ADDR,2);
   update_display(DEST_I2C_ADDR,3);
  
+}
+
+void SendGammaAll(uint8_t R,uint8_t G, uint8_t B){
+  for(uint8_t i=0;i<DEST_I2C_COUNT;i++){
+    SendGamma(R, G, B,DEST_I2C_ADDR+i);
+  }
+}
+void SendGamma(uint8_t R,uint8_t G, uint8_t B,uint8_t addr2){
+    // BlinkM_sendBuffer(byte addr, byte col, byte* disp_data)
+    uint8_t rob[64];
+    rob[0] = R;
+    rob[1] = G;
+    rob[2] = B;
+    BlinkM_sendBuffer(DEST_I2C_ADDR+addr2, 4, rob);  
 }
 
 
