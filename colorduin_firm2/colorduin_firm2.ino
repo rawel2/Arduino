@@ -274,6 +274,22 @@ void FlipPage(void)
   Page_Write = !Page_Index;
 }
 
+void SetI2cAddress(uint8_t addr){
+  //set i2c address in eeprom
+  char rob;
+  rob ='P';
+  EEPROM.write(0, rob);
+  rob ='R';
+  EEPROM.write(1, rob);
+  rob =addr;
+  EEPROM.write(2, rob);
+  rob ='P';
+  EEPROM.write(3, rob);
+  rob ='R';
+  EEPROM.write(4, rob);
+ 
+}
+
 void GetI2CAddres(void){
   if((EEPROM.read(0)=='P') and (EEPROM.read(1)=='R') and (EEPROM.read(3)=='P') and (EEPROM.read(4)=='R'))
   {
@@ -340,6 +356,18 @@ void loop()
         for (byte y = 0; y < 8; y++){
            dots[Page_Write][x][y][c]= Wire.read();
         }
+      }
+    }
+    if (c == 3) {
+      // change i2c address
+      if(Wire.read()=='P'){
+        if(Wire.read()=='R'){
+          SetI2cAddress(Wire.read());
+        }
+      }
+        
+      for (byte y = 0; y < 61; y++){
+        Wire.read();
       }
     }
     if (c == 4) {
