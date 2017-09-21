@@ -82,12 +82,12 @@ void setup()
   Serial.begin(9600);
   paletteShift = 0;
   DS3231_init();
-  //DS3231_set_time(13,1,0);
+  //DS3231_set_time(21,5,0);
   DS3231_get_datetime(&datetime );
   DS3231_get_temp(&temperature);
-  SendGammaAll(8,63,50);
+  SendGammaAll(9,63,50);
 
-  SendI2C(5,10);
+  //SendI2C(5,10);
 }
 
 void loop()
@@ -125,7 +125,7 @@ void plasma_morph()
 
   Serial.println(paletteShift);
   
-  x0 = 2;
+  x0 = 0;
 //  y0 = paletteShift%300 - 8;
 //  if (y0 > 0) {y0=0;}
   
@@ -193,7 +193,7 @@ void SendGamma(uint8_t R,uint8_t G, uint8_t B,uint8_t addr2){
     rob[0] = R;
     rob[1] = G;
     rob[2] = B;
-    BlinkM_sendBuffer(DEST_I2C_ADDR+addr2, 4, rob);  
+    BlinkM_sendBuffer(addr2, 4, rob);  
 }
 
 void SendI2C(uint8_t oldaddr,uint8_t newaddr){
