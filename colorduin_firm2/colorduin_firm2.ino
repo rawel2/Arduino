@@ -54,6 +54,9 @@ uint8_t color = 0;//the value of every dots, 0 is Red, 1 is Green, 2 is Blue
 uint8_t I2C_Device_Address = 0;
 uint8_t line = 0;
 
+
+extern const unsigned char font8_8[92][8];
+
 void _IO_Init()
 {
   DDRD = 0xff; // set all pins direction of PortD
@@ -236,6 +239,63 @@ void open_line(uint8_t x)
   }
 }
 
+
+void DispShowCharBG(char chr,unsigned char R,unsigned char G,unsigned char B,char bias,unsigned char Rbk,unsigned char Gbk,unsigned char Bbk)
+{
+  unsigned char i,j,aa,bb,cc,temp;
+  unsigned char Char;
+  unsigned char chrtemp[8] = {0};
+  
+  if ((bias > 8) || (bias < -8))
+    return;
+
+  if ((bias > -8) && (bias < 8)){
+    Char = chr - 32;
+    aa = (bias>=0 ? 0 : -bias);
+    bb = (bias>=0 ? bias :  0);
+    cc = 8- (bias>=0 ? bias : -bias);
+    
+    for(i = 0;i< cc;i++){
+      chrtemp[aa+i] = pgm_read_byte(&(font8_8[Char][bb+i]));    
+    }    
+  }
+  
+  for(i = 0;i < 8;i++)
+  {
+    temp = chrtemp[i];
+    for(j = 0;j < 8;j++)
+    {
+      if(temp & 0x80)
+      {
+        dots[Page_Write][j][i][0] = R;
+        dots[Page_Write][j][i][1] = G;
+        dots[Page_Write][j][i][2] = B;
+      }
+      else
+      {
+        dots[Page_Write][j][i][0] = Rbk;
+        dots[Page_Write][j][i][1] = Gbk;
+        dots[Page_Write][j][i][2] = Bbk;
+      }
+      temp = temp << 1;
+    }
+  }
+  FlipPage();
+}
+/********************************************************
+Name:DispShowChar
+Function:Display a English latter in LED matrix
+Parameter:chr :the latter want to show
+          R: the value of RED.   Range:RED 0~255
+          G: the value of GREEN. Range:RED 0~255
+          B: the value of BLUE.  Range:RED 0~255
+          bias: the bias of a letter in LED Matrix.Range -7~7
+********************************************************/
+void DispShowChar(char chr,unsigned char R,unsigned char G,unsigned char B,char bias)
+{
+  DispShowCharBG(chr, R, G, B, bias, 0, 0, 0);
+};
+
 /********************************************************
 Name:DispShowColor
 Function:Fill a color in LED matrix
@@ -274,7 +334,7 @@ void FlipPage(void)
   Page_Write = !Page_Index;
 }
 
-void SetI2cAddress(uint8_t addr){
+void SetI2cAddrToEEPROM(uint8_t addr){
   //set i2c address in eeprom
   char rob;
   rob ='P';
@@ -283,15 +343,10 @@ void SetI2cAddress(uint8_t addr){
   EEPROM.write(1, rob);
   rob =addr;
   EEPROM.write(2, rob);
-  rob ='P';
-  EEPROM.write(3, rob);
-  rob ='R';
-  EEPROM.write(4, rob);
- 
 }
 
-void GetI2CAddres(void){
-  if((EEPROM.read(0)=='P') and (EEPROM.read(1)=='R') and (EEPROM.read(3)=='P') and (EEPROM.read(4)=='R'))
+void GetI2CAddrFromEEPROM(void){
+  if((EEPROM.read(0)=='P') && (EEPROM.read(1)=='R') )
   {
     I2C_Device_Address = EEPROM.read(2);
     Serial.print("Address from EEPROM: 0x");
@@ -306,24 +361,69 @@ void GetI2CAddres(void){
     Serial.println(" .");
     Serial.println("SET Address from program!");
   }
-  
 }
+void SetGammaToEEPROM(void){
+  //set Gamm in eeprom
+  char rob;
+  rob ='P';
+  EEPROM.write(3, rob);
+  rob ='R';
+  EEPROM.write(4, rob);
+  rob = Gamma_Value[0];
+  EEPROM.write(5, rob);
+  rob = Gamma_Value[1];
+  EEPROM.write(6, rob);
+  rob = Gamma_Value[2];
+  EEPROM.write(7, rob);
+}
+
+void GetGammaFromEEPROM(void){
+  if((EEPROM.read(3)=='P') && (EEPROM.read(4)=='R') )
+  {
+    Gamma_Value[0] = EEPROM.read(5);
+    Gamma_Value[1] = EEPROM.read(6);
+    Gamma_Value[2] = EEPROM.read(7);
+    Serial.print("Gamma from EEPROM: ");
+  }
+  else
+  {
+    I2C_Device_Address = I2C_DEVICE_ADDRESS_DEF;
+    Serial.print("ERROR: Gamma from default: ");
+  }
+
+  Serial.print(Gamma_Value[0],DEC);
+  Serial.print(" ,");
+  Serial.print(Gamma_Value[1],DEC);
+  Serial.print(" ,");
+  Serial.print(Gamma_Value[2],DEC);
+  Serial.println(" .");
+}
+
 /****************************************************
 Main Functions zone
 ****************************************************/
 void setup()
 {
-  Serial.begin(9600);
+  //Serial.begin(9600);
+  
+  GetI2CAddrFromEEPROM();
+  GetGammaFromEEPROM();
+  
   _IO_Init();           //Init IO
   _LED_Init();          //Init LED Hardware
   _TC2_Init();          //Init Timer/Count2
-  GetI2CAddres();
+  
+  /*
+  DispShowColor(50,50,50);
+  delay(1000);
+  DispShowChar('P',100,100,100,0);
+  delay(1000);
+  DispShowCharBG('P',0,0,0,0,100,100,100);
+  delay(1000);
+  */
+
   Wire.begin(I2C_Device_Address); // join i2c bus as slave
   Wire.onReceive(receiveEvent);   // define the receive function for receiving data from master
-  
-  //DispShowColor(5,5,5);
-  //LED_Delay(10000);
-  //DispShowColor(0,0,0);
 }
 
 void loop()
@@ -362,7 +462,7 @@ void loop()
       // change i2c address
       if(Wire.read()=='P'){
         if(Wire.read()=='R'){
-          SetI2cAddress(Wire.read());
+          SetI2cAddrToEEPROM(Wire.read());
         }
       }
         
@@ -379,6 +479,7 @@ void loop()
       for (byte y = 0; y < 61; y++){
         Wire.read();
       }
+      SetGammaToEEPROM();
     }
     //read end of data marker
     if (Wire.read()==END_OF_DATA) {
