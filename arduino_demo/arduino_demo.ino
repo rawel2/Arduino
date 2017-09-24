@@ -28,7 +28,7 @@
 #define SCREENSIZEY 8            //num of LEDs down
 #define DS3231_ADDR 0x68
 
-byte display_byte[3][4][64];        //display array - 64 bytes x 3 colours 
+byte display_byte[3][DEST_I2C_COUNT][64];        //display array - 64 bytes x 3 colours 
 
 extern unsigned char font8_8[92][8];
 
@@ -85,9 +85,9 @@ void setup()
   //DS3231_set_time(21,5,0);
   DS3231_get_datetime(&datetime );
   DS3231_get_temp(&temperature);
-  SendGammaAll(9,63,50);
+  //SendGammaAll(9,63,50);
 
-  //SendI2C(5,10);
+ //SendI2C(11,15);
 }
 
 void loop()
@@ -199,7 +199,9 @@ void SendGamma(uint8_t R,uint8_t G, uint8_t B,uint8_t addr2){
 void SendI2C(uint8_t oldaddr,uint8_t newaddr){
     // BlinkM_sendBuffer(byte addr, byte col, byte* disp_data)
     uint8_t rob[64];
-    rob[0] = newaddr;
+    rob[0] = 'P';
+    rob[1] = 'R';
+    rob[2] = newaddr;
     BlinkM_sendBuffer(oldaddr, 3, rob);  
 }
 
@@ -218,13 +220,13 @@ void display(byte x, byte y, byte r, byte g, byte b) {
   display_byte[1][1][p2] = g;
   display_byte[2][1][p2] = b;
   
-  display_byte[0][2][p1] = r;
-  display_byte[1][2][p1] = g;
-  display_byte[2][2][p1] = b;
+  display_byte[0][2][p3] = r;
+  display_byte[1][2][p3] = g;
+  display_byte[2][2][p3] = b;
 
-  display_byte[0][3][p2] = r;
-  display_byte[1][3][p2] = g;
-  display_byte[2][3][p2] = b;
+  display_byte[0][3][p4] = r;
+  display_byte[1][3][p4] = g;
+  display_byte[2][3][p4] = b;
   
   /*
   display_byte[0][2][p3] = r;

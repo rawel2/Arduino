@@ -76,8 +76,6 @@ void _LED_Init()
   LED_Delay(1);
   LED_RST(1);
   LED_Delay(1);
-  
-  SetGamma();
   line = 0;
   
 }
@@ -91,7 +89,6 @@ void _TC2_Init()
   ASSR |= (1<<AS2);       // Use internal clock - external clock not used in Arduino
   TIMSK2 |= (1<<TOIE2) | (0<<OCIE2B);   //Timer2 Overflow Interrupt Enable
   TCNT2 = 0xff;
-  sei();
 }
 
 
@@ -158,6 +155,7 @@ the LED datas operate functions zone
 
 void SetGamma()
 {
+  cli();
   uint8_t i = 0;
   uint8_t j = 0;
   uint8_t k = 0;
@@ -181,6 +179,7 @@ void SetGamma()
     }
   }
   LED_SLB(1);
+  sei();
 }
 
 void run(uint8_t k)
@@ -387,7 +386,9 @@ void GetGammaFromEEPROM(void){
   }
   else
   {
-    I2C_Device_Address = I2C_DEVICE_ADDRESS_DEF;
+    Gamma_Value[0] = 20;
+    Gamma_Value[1] = 63;
+    Gamma_Value[2] = 50;
     Serial.print("ERROR: Gamma from default: ");
   }
 
@@ -412,7 +413,9 @@ void setup()
   _IO_Init();           //Init IO
   _LED_Init();          //Init LED Hardware
   _TC2_Init();          //Init Timer/Count2
-  
+  sei();  
+  SetGamma();
+
   /*
   DispShowColor(50,50,50);
   delay(1000);
@@ -475,6 +478,7 @@ void loop()
       Gamma_Value[0] = Wire.read();
       Gamma_Value[1] = Wire.read();
       Gamma_Value[2] = Wire.read();
+      
       SetGamma();
       for (byte y = 0; y < 61; y++){
         Wire.read();
