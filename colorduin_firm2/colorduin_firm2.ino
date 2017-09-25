@@ -242,7 +242,7 @@ void open_line(uint8_t x)
 void DispShowCharBG(char chr,unsigned char R,unsigned char G,unsigned char B,char bias,unsigned char Rbk,unsigned char Gbk,unsigned char Bbk)
 {
   unsigned char i,j,aa,bb,cc,temp;
-  unsigned char Char;
+  unsigned int Char;
   unsigned char chrtemp[8] = {0};
   
   if ((bias > 8) || (bias < -8))

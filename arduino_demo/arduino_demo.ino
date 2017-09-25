@@ -8,15 +8,13 @@
    
   libraries to patch:
   Wire: 
-   	utility/twi.h: #define TWI_FREQ 400000L (was 100000L)
+   	    utility/twi.h: #define TWI_FREQ 400000L (was 100000L)
                        #define TWI_BUFFER_LENGTH 70 (was 32)
-   	wire.h:        #define BUFFER_LENGTH 70 (was 32)
- 
- 
- */
+      	wire.h:        #define BUFFER_LENGTH 70 (was 32)
+*/
 
 #include <Wire.h>
-
+#include "fonts.h"
 
 
 #define START_OF_DATA 0x10       //data markers
@@ -29,8 +27,6 @@
 #define DS3231_ADDR 0x68
 
 byte display_byte[3][DEST_I2C_COUNT][64];        //display array - 64 bytes x 3 colours 
-
-extern unsigned char font8_8[92][8];
 
 typedef union {
 	uint8_t bytes[7];
@@ -82,7 +78,7 @@ void setup()
   Serial.begin(9600);
   paletteShift = 0;
   DS3231_init();
-  //DS3231_set_time(21,5,0);
+  //DS3231_set_time(14,0,0);
   DS3231_get_datetime(&datetime );
   DS3231_get_temp(&temperature);
   //SendGammaAll(9,63,50);
@@ -310,29 +306,32 @@ void HSVtoRGB(void *vRGB, void *vHSV)
  
 void DispShowChar(char chr,unsigned char R,unsigned char G,unsigned char B,char bias,char disp, char neg, char dwukropek)
 {
-  unsigned char i,j,temp;
-  unsigned char Char;
-  unsigned char chrtemp[24] = {0};
+  unsigned char i,j,aa,bb,cc,temp;
+  unsigned int Char;
+  unsigned char chrtemp[8] = {0};
   unsigned char p1;
   
   if ((bias > 8) || (bias < -8))
-    return;
+   return;
 
-  Char = chr - 32;
-  
-  j = 8 - bias;
-  
-  for(i = 0;i< 8;i++){
-    chrtemp[j] = pgm_read_byte(&(font8_8[Char][i]));    
-    j++;
-  }  
+  if ((bias > -8) && (bias < 8)){
+    Char = (chr - 32)*8;
+    aa = (bias>=0 ? 0 : -bias);
+    bb = (bias>=0 ? bias :  0);
+    cc = 8- (bias>=0 ? bias : -bias);
+    
+    for(i = 0;i< cc;i++){
+      chrtemp[aa+i] = pgm_read_byte(&(Font8x8_[Char+bb+i]));    
+    }    
+  }
+
   
   for(i = 0;i < 8;i++)
   {
     if((dwukropek == 1) and (i==0))
     {temp = B00100100;}
     else
-    {temp = chrtemp[i+8];}
+    {temp = chrtemp[i];}
     
     for(j = 0;j < 8;j++)
     {
