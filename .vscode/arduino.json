@@ -1,0 +1,4 @@
+{
+    "sketch": "colorduino\\colorduino_demo\\colorduino_demo.ino",
+    "board": "atmel-avr-xminis:avr:atmega328p_xplained_mini"
+}
