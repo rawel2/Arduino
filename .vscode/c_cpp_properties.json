@@ -3,7 +3,10 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceRoot}"
+                "${workspaceRoot}",
+                "${workspaceRoot}/hardware/espressif/esp32/libraries/Wire/src",
+                "${workspaceRoot}/hardware/espressif/esp32/cores/esp32"
+                
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": false,
