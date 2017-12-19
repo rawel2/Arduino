@@ -2,5 +2,6 @@
     "arduino.path": "d:/Arduino",
     "arduino.additionalUrls": "",
     "arduino.logLevel": "info", 
-    "arduino.enableUSBDetection": true
+    "arduino.enableUSBDetection": true, 
+    "C_Cpp.intelliSenseEngine": "Default"
 }
